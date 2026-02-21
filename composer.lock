@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "45de7718d89b2380355804664b35bc7e",
+    "content-hash": "381fc922b5e9bf79fb041c08c5e0c974",
     "packages": [
         {
             "name": "doctrine/collections",
@@ -1127,16 +1127,16 @@
         },
         {
             "name": "martenasoft/sdk_bundle",
-            "version": "v1.0.1",
+            "version": "v2.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/martenasoft/SdkBundle.git",
-                "reference": "8857e8659e5d632d95132348818ee5cdab38172f"
+                "reference": "b827e5046d5f7b4a98c5367dc4c0e42676c3a5b4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/martenasoft/SdkBundle/zipball/8857e8659e5d632d95132348818ee5cdab38172f",
-                "reference": "8857e8659e5d632d95132348818ee5cdab38172f",
+                "url": "https://api.github.com/repos/martenasoft/SdkBundle/zipball/b827e5046d5f7b4a98c5367dc4c0e42676c3a5b4",
+                "reference": "b827e5046d5f7b4a98c5367dc4c0e42676c3a5b4",
                 "shasum": ""
             },
             "require": {
@@ -1164,9 +1164,9 @@
             "description": "MartenaSoft Sdk Bundle",
             "support": {
                 "issues": "https://github.com/martenasoft/SdkBundle/issues",
-                "source": "https://github.com/martenasoft/SdkBundle/tree/v1.0.1"
+                "source": "https://github.com/martenasoft/SdkBundle/tree/v2.0.0"
             },
-            "time": "2026-02-21T13:40:03+00:00"
+            "time": "2026-02-21T21:48:53+00:00"
         },
         {
             "name": "psr/cache",
