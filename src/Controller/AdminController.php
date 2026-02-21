@@ -3,12 +3,9 @@
 namespace MartenaSoft\PageBundle\Controller;
 
 use MartenaSoft\CommonLibrary\Dictionary\DictionaryMessage;
-use MartenaSoft\CommonLibrary\Entity\Interfaces\AuthorInterface;
-use MartenaSoft\CommonLibrary\Helper\StringHelper;
 use MartenaSoft\PageBundle\Entity\Page;
 use MartenaSoft\PageBundle\Form\PageType;
 use MartenaSoft\PageBundle\Manager\PageManager;
-use MartenaSoft\UserBundle\Entity\SuperAdminUser;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;

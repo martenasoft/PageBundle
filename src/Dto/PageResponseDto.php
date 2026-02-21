@@ -4,7 +4,7 @@ namespace MartenaSoft\PageBundle\Dto;
 
 use Knp\Bundle\PaginatorBundle\Pagination\SlidingPaginationInterface;
 use MartenaSoft\PageBundle\Entity\Page;
-use MartenaSoft\SiteBundle\Dto\ActiveSiteDto;
+use MartenaSoft\CommonLibrary\Dto\ActiveSiteDto;
 
 class PageResponseDto
 {
