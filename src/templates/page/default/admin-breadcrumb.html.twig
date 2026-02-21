@@ -1,0 +1,13 @@
+{% if parent.menu is defined %}
+
+    {% for key, item in parent.menu.parents %}
+        {% if isLastAsActive is defined and isLastAsActive is defined == true and loop.last == true %}
+            <li class="breadcrumb-item">{{  item.name  }}</li>
+        {% else %}
+            <li class="breadcrumb-item"><a href="{{ path('app_page_items_admin') }}">{{ item.name }}</a></li>
+        {% endif %}
+
+    {% endfor %}
+{% else %}
+    <li class="breadcrumb-item active" aria-current="page">{{ 'Pages items' | trans }}</li>
+{% endif %}

@@ -1,0 +1,17 @@
+{% extends '@Site/' ~ app.request.attributes.get('active_site').templatePath ~ '/base.html.twig' %}
+{% block body %}
+
+    {% if page is defined and page is not null %}
+        {{ page.preview }}
+        {{ render(controller('image_viewer::getImages', {
+            request: app.request,
+            type: 'page',
+            parentUuid: page.uuid,
+            size: 'big'
+        })) }}
+
+
+        {{ page.body }}
+    {% endif %}
+{% endblock %}
+

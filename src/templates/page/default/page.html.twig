@@ -1,0 +1,37 @@
+{% extends '@Site/' ~ app.request.attributes.get('active_site').templatePath ~ '/base.html.twig' %}
+
+
+{% block flash_message %} {% include '@Page/' ~ app.request.attributes.get('active_site').templatePath ~ '/flash-message.html.twig' %}{% endblock %}
+
+{% block body %}
+    <div> {{ page.preview }} </div>
+
+    {% for item in items %}
+        {% include '@Page/'~ app.request.attributes.get('active_site').templatePath  ~'/page-item.html.twig' with {page: item} %}
+    {% endfor %}
+
+    {% if items|length > 0 %}
+        {{ knp_pagination_rel_links(items) }}
+    {% endif %}
+    <hr>
+    {% set carusel = render(controller('image_viewer::getImages', {
+        request: app.request,
+        type: 'page',
+        parentUuid: page.uuid,
+        size: 'big'
+    }))|trim %}
+    <div class="row">
+        {% if carusel is not empty %}
+        <div class="col-8">
+            {{ carusel | raw }}
+        </div>
+        <div class="col-4">
+            {{ page.body }}
+        </div>
+        {% else %}
+            <div class="col-12">
+                {{ page.body }}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

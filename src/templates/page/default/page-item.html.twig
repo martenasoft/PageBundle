@@ -1,0 +1,36 @@
+<div class="container">
+    <div class="row">
+
+        {% if page is not null %}
+            {% set carusel = render(controller('image_viewer::getImages', {
+                request: app.request,
+                type: 'page',
+                parentUuid: page.uuid,
+                size: 'small'
+            }))|trim %}
+            {% if carusel is not empty %}
+                <div class="col-3">
+                    <a href="{{ path('app_page_slug', {slug: page.menu.fullPath }) }}">
+                    {{ carusel|raw }}
+                    </a>
+                </div>
+
+                <div class="col-9">
+                    <h3>
+                        <a href="{{ path('app_page_slug', {slug: page.menu.fullPath }) }}"> {{ page.name }}</a>
+                    </h3>
+                    <div>{{ page.preview }}</div>
+                </div>
+            {% else %}
+                <div class="col-12">
+                    <h3>
+                        <a href="{{ path('app_page_slug', {slug: page.menu.fullPath }) }}"> {{ page.name }}</a>
+                    </h3>
+                    <div>{{ page.preview }}</div>
+                </div>
+            {% endif %}
+        {% endif %}
+
+
+    </div>
+</div>

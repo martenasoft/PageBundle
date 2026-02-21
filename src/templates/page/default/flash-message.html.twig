@@ -1,0 +1,14 @@
+{% for message in app.flashes('success') %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ message|raw }}
+            <figure>
+                <blockquote class="blockquote">
+                    <p>A well-known quote, contained in a blockquote element.</p>
+                </blockquote>
+                <figcaption class="blockquote-footer">
+                    Someone famous in <cite title="Source Title">Source Title</cite>
+                </figcaption>
+            </figure>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+{% endfor %}
