@@ -15,6 +15,11 @@ class PageRepository extends ServiceEntityRepository
         parent::__construct($registry, Page::class);
     }
 
+    public function getCount(array $filter = []): int
+    {
+        return $this->count($filter);
+    }
+
     public function getOneBySlugQueryBuilder(
         ActiveSiteDto $activeSiteDto,
         string $slug,
