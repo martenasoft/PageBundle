@@ -2,7 +2,6 @@
 
 namespace MartenaSoft\PageBundle\Repository;
 
-use MartenaSoft\CommonLibrary\Dictionary\DictionaryPage;
 use MartenaSoft\PageBundle\Entity\Page;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;

@@ -26,7 +26,6 @@ use MartenaSoft\CommonLibrary\Entity\Traits\StatusTrait;
 use MartenaSoft\CommonLibrary\Entity\Traits\TypeTrait;
 use MartenaSoft\CommonLibrary\Entity\Traits\UpdatedAtTrait;
 use MartenaSoft\CommonLibrary\Entity\Traits\UuidTrait;
-use MartenaSoft\ImageBundle\Entity\Image;
 use MartenaSoft\MenuBundle\Entity\Menu;
 use MartenaSoft\PageBundle\Repository\PageRepository;
 
@@ -69,7 +68,6 @@ class Page implements AuthorInterface
     #[ORM\OneToOne(mappedBy: 'page', targetEntity: Menu::class)]
     private ?Menu $menu = null;
 
-    private Collection $images;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $routeName = null;
@@ -80,7 +78,6 @@ class Page implements AuthorInterface
     public function __construct()
     {
         $this->children = new ArrayCollection();
-        $this->images = new ArrayCollection();
     }
 
     public function getParent(): ?self
@@ -135,28 +132,6 @@ class Page implements AuthorInterface
         return $this;
     }
 
-    public function getImages(): Collection
-    {
-        return $this->images;
-    }
-
-    public function addImage(Image $image): self
-    {
-        if (!$this->images->contains($image)) {
-            $this->images->add($image);
-            $image->addPage($this);
-        }
-
-        return $this;
-    }
-
-    public function removeImage(Image $image): self
-    {
-        if ($this->images->removeElement($image)) {
-            $image->removePage($this);
-        }
-        return $this;
-    }
 
     public function getRouteName(): ?string
     {
