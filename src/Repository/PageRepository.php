@@ -6,8 +6,7 @@ use MartenaSoft\PageBundle\Entity\Page;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
-use MartenaSoft\SiteBundle\Dto\ActiveSiteDto;
-
+use MartenaSoft\CommonLibrary\Dto\ActiveSiteDto;
 
 class PageRepository extends ServiceEntityRepository
 {

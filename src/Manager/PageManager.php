@@ -13,7 +13,6 @@ use MartenaSoft\PageBundle\Dto\PageResponseDto;
 use MartenaSoft\PageBundle\Entity\Page;
 use MartenaSoft\PageBundle\Event\SavedPageEvent;
 use MartenaSoft\PageBundle\Repository\PageRepository;
-use MartenaSoft\PageBundle\Service\PageImageService;
 use MartenaSoft\CommonLibrary\Dto\ActiveSiteDto;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
@@ -29,7 +28,6 @@ readonly class PageManager
         private LoggerInterface $logger,
         private SluggerInterface $slugger,
         private PaginatorInterface $pagination,
-        public PageImageService $pageImageService,
     )
     {
     }
