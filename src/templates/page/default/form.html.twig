@@ -1,0 +1,110 @@
+{% extends '@Admin/' ~ app.request.attributes.get('active_site').templatePath ~ '/base.html.twig' %}
+
+{% set isMainPage = (app.request.attributes.get('_route') == 'app_page_main_create') %}
+
+{% block title %} {{ (page.uuid is null ? 'Create' : 'Update') | trans }} {{ isMainPage ? 'Main page' : 'Page' | trans }} {{ page.uuid is not null ? page.name }} {% endblock %}
+{% block h1 %}{{ (page.uuid is null ? 'Create' : 'Update') | trans }} {{ isMainPage ? 'Main page' : 'Page' | trans }}  {{ page.uuid is not null ? page.name }} {% endblock %}
+{% block breadcrumbs %}
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+
+            <li class="breadcrumb-item"><a href="{{ path('app_page_main') }}">{{ 'Home' | trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin_main') }}">{{ 'Admin' | trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('app_page_items_admin') }}">{{ 'Pages items' | trans }}</a></li>
+            {% include '@Page/'~ app.request.attributes.get('active_site').templatePath  ~'/admin-breadcrumb.html.twig' with {parent: parent} %}
+            <li class="breadcrumb-item active" aria-current="page">{{ page.id is null ? 'Create' : 'Update'}} {{ isMainPage ? 'Main page' : 'Page' | trans }} {{ page.uuid is not null ? page.name }} </li>
+        </ol>
+    </nav>
+{% endblock %}
+{% block h1_right %}
+
+    {% if page.uuid is defined and page.uuid is not empty %}
+        {% include '@Admin/' ~ app.request.attributes.get('active_site').templatePath ~ '/_view_admin_sub_menu.html.twig' with {
+            noDivider: true,
+            items: [
+                {
+                    title: 'Show',
+                    path: (page.slug == '/' ? path('app_page_main') : path('app_page_slug', {'slug': page.slug})),
+                    attr: 'target="_blank"'
+                },
+                {
+                    title: 'Image',
+                    path: path('admin_index_image', {type: 'page', parentUuid: page.uuid}),
+                    titleCreate: 'Create',
+                    pathCreate: path('admin_create_image', {type: 'page', parentUuid: page.uuid})
+                },
+                {
+                    title: 'Delete',
+                    path: null,
+                },
+            ]
+        }%}
+    {% else %}
+    <div class="text-end">
+        <button type="button" class="btn btn-outline-secondary dropdown-toggle text-end" onclick="alert('More options like manage Images will be able after saving this new page.')">{{ 'Actions' | trans }} ...</button>
+    </div>
+
+
+    {% endif %}
+
+{% endblock %}
+
+{% block body %}
+
+    <div class="pt-3">
+
+        {% form_theme form 'bootstrap_5_layout.html.twig' %}
+        {{ form_start(form) }}
+        <div class="row">
+            <div class="col-2">{{ form_label(form.name) }}</div>
+            <div class="col-6">{{ form_widget(form.name) }}</div>
+            <div class="col-4 text-end">{{ form_errors(form.name) }}</div>
+        </div>
+
+        <div class="row mt-3">
+            <div class="col-12">{{ form_label(form.preview) }}</div>
+            <div class="col-12">{{ form_widget(form.preview) }}</div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12">{{ form_label(form.body) }}</div>
+            <div class="col-12">{{ form_widget(form.body) }}</div>
+        </div>
+
+        {% if form.isOnTopMenu is defined %}
+            <div class="row mt-3">
+                <div class="col-12">Menu<hr></div>
+            </div>
+        <div class="row mt-3">
+            <div class="col-12">{{ form_widget(form.isOnTopMenu) }}</div>
+            <div class="col-12">{{ form_widget(form.isOnLeftMenu) }}</div>
+            <div class="col-12">{{ form_widget(form.isOnFooterMenu) }}</div>
+
+        </div>
+        {% endif %}
+        <hr>
+        {% if form.isOnTopMenu is defined %}
+        <div class="row">
+            <div class="col-2">{{ form_label(form.type) }}</div>
+            <div class="col-6">{{ form_widget(form.type) }}</div>
+            <div class="col-4 text-end">{{ form_errors(form.type) }}</div>
+        </div>
+        <hr>
+        {% endif %}
+        <div class="form-check mt-3">
+            <input class="form-check-input" name="returnToNewFormAfterSave" type="checkbox" value="1"  id="returnToNewFormAfterSave">
+            <label class="form-check-label" for="returnToNewFormAfterSave">
+                Save and return to this form
+            </label>
+        </div>
+
+
+        <div class="row mt-3">
+
+            <div class="col-6"><a href="{{ path('app_page_items_admin') }}" class="btn btn-secondary">{{ 'Cancel' | trans }}</a></div>
+            <div class="col-6 text-end">
+                <button class="btn btn-primary" type="submit">{{ 'Save' | trans }}</button>
+            </div>
+        </div>
+    </div>
+    {{ form_end(form) }}
+{% endblock %}

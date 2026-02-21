@@ -1,0 +1,85 @@
+{% extends '@Admin/' ~ app.request.attributes.get('active_site').templatePath ~ '/base.html.twig' %}
+
+{% block title %}{{ 'Pages' | trans}} {{ 'index' | trans }} ({{ pagination.getTotalItemCount }}) {% endblock %}
+{% block h1 %}{{ 'Pages' | trans}} {{ 'index' | trans }} ({{ pagination.getTotalItemCount }}) {% endblock %}
+
+{% block h1_right %}
+    {% include '@Admin/' ~ app.request.attributes.get('active_site').templatePath ~ '/_view_admin_sub_menu.html.twig' with {
+        createButtonTitle: 'Create page',
+        createButtonPath: (parent.uuid is defined ? path('app_page_create', {parentUuid: parent.uuid}) : null ) ,
+        isLastAsActive: true,
+        items: [
+            {
+                title: 'Basket',
+                path: null,
+            },
+        ]
+    }%}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('app_page_main') }}">{{ 'Home' | trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin_main') }}">{{ 'Admin' | trans }}</a></li>
+            {% include '@Page/'~ app.request.attributes.get('active_site').templatePath  ~'/admin-breadcrumb.html.twig' with {parent: parent} %}
+
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block body %}
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>{{ 'Name' | trans }}</th>
+            <th class="text-end"></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for page in pagination %}
+            <tr>
+
+                <td><a href="{{ path('app_page_items_admin', {'parent': page.uuid}) }}">{{ page.name }}</a> </td>
+                <td class="text-end">
+                    {% include '@Admin/' ~ app.request.attributes.get('active_site').templatePath ~ '/_view_admin_sub_menu.html.twig' with {
+                        noDivider: true,
+                        items: [
+                            {
+                                title: 'Create sub page',
+                                path: path('app_page_create', {'parentUuid': page.uuid}),
+                            },
+                            {
+                                title: 'Show',
+                                path: (page.slug == '/' ? path('app_page_main') : path('app_page_slug', {'slug': page.slug})),
+                                attr: 'target="_blank"'
+                            },
+                            {
+                                title: 'Edit',
+                                path: path('app_page_update', {'uuid': page.uuid}),
+                            },
+                            {
+                                title: 'Delete',
+                                path: path('app_permission_admin_delete', {'uuid': page.uuid}),
+                                attr: "onclick='return confirm(\"Delete this page\")'"
+                            },
+                        ]
+                    }%}
+
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="3">
+                    {% include '@Admin/' ~ app.request.attributes.get('active_site').templatePath ~ '/no_records_founds.html.twig' %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="navigation">
+        {{ knp_pagination_render(pagination) }}
+    </div>
+{% endblock %}
