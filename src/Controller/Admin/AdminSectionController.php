@@ -1,93 +1,94 @@
 <?php
 
-namespace MartenaSoft\PageBundle\Controller;
+namespace MartenaSoft\PageBundle\Controller\Admin;
 
 use MartenaSoft\CommonLibrary\Dictionary\DictionaryMessage;
+use MartenaSoft\CommonLibrary\Dictionary\DictionaryPage;
+use MartenaSoft\PageBundle\Dto\SectionResponseDto;
 use MartenaSoft\PageBundle\Entity\Page;
-use MartenaSoft\PageBundle\Form\PageType;
+use MartenaSoft\PageBundle\Form\Admin\PageType;
+use MartenaSoft\PageBundle\Form\Admin\SectionType;
+use MartenaSoft\PageBundle\Manager\AdminSectionManager;
 use MartenaSoft\PageBundle\Manager\PageManager;
 use Psr\Log\LoggerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-class AdminController extends AbstractController
+class AdminSectionController extends AbstractAdminController
 {
-    private const string LOG_PREFIX = 'AdminController';
+    private const string LOG_PREFIX = 'AdminSectionController';
 
-    #[Route('/{_locale}/admin/index-pages/{parent?}', name: 'app_page_items_admin', priority: -11)]
+    protected function getIndexRoute(): string
+    {
+        return 'app_page_items_admin';
+    }
+
+    #[Route('/admin/{_locale}/section-items/{parent?}', name: 'app_page_section_items_admin', priority: -11)]
     public function index(
         Request $request,
-        PageManager $pageManager,
+        AdminSectionManager $adminSectionManager,
         #[MapEntity(mapping: ['parent' => 'uuid'])] ?Page $parent = null,
     ): Response {
 
         $activeSite = $request->attributes->get('active_site');
-        $items = $pageManager->getItems(
+        $sectionResponseDto = $adminSectionManager->getItems(
             $activeSite,
             $request->getLocale(),
             $request->query->getInt('page', 1),
             $parent
         );
 
-        if (empty($parent) && $items->getTotalItemCount() === 0) {
-            return $this->redirectToRoute('app_page_main_create');
-        }
-
-        return $this->render(sprintf('@Page/%s/admin-items.html.twig', $activeSite->templatePath), [
-            'pagination' => $items,
+        return $this->render(sprintf('@Page/%s/admin/sections/index.html.twig', $activeSite->templatePath), [
+            'pagination' => $sectionResponseDto->getItems(),
             'parent' => $parent,
+            'page' => $sectionResponseDto->getPage()
         ]);
     }
 
-    #[Route("/{_locale}/admin/create-page/{parentUuid?}", name: 'app_page_create', defaults: ['_locale' => null], methods: ['GET', 'POST'])]
-    #[Route("/{_locale}/admin/create-main-page", name: 'app_page_main_create', defaults: ['_locale' => null], methods: ['GET', 'POST'])]
+    #[Route("/admin/{_locale}/create-section/{parentUuid?}", name: 'app_section_create', defaults: ['_locale' => null], methods: ['GET', 'POST'])]
     #[IsGranted('ROUTE_ACCESS')]
-    public function createPage(
+    public function create(
         Request $request,
-        PageManager $pageManager,
+        AdminSectionManager $adminSectionManager,
         LoggerInterface $logger,
         #[MapEntity(mapping: ['parentUuid' => 'uuid'])]
         ?Page $parent = null
-    ): Response {
+    ): Response
+    {
+        $locale = $request->getLocale();
         $activeSite = $request->attributes->get('active_site');
-        if ($parent === null && ($mainPage = $pageManager->gasMainPage($activeSite, $request->getLocale())) !== null) {
-            return $this->redirectToRoute('app_page_update', [
-                'uuid' => $mainPage->getUuid(),
-                '_locale' => $request->getLocale()
-            ]);
-        }
-
         $page = new Page();
-        $route = $request->attributes->get('_route');
+        $page
+            ->setParent($parent)
+            ->setLang($locale)
+            ->setRouteName('app_page_slug')
+            ->setIsOnMain(false)
+            ->setType(DictionaryPage::SECTION_TYPE);
 
-        $form = $this->createForm(PageType::class, $page, [
+        $form = $this->createForm(SectionType::class, $page, [
             'languages' => array_flip($activeSite->languages),
-            'isMainPage' => $parent === null,
         ]);
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $locale = $request->getLocale();
             try {
-                $pageManager->create($this->getUser(), $activeSite, $locale, $route, $page, $parent);
+                $adminSectionManager->save($activeSite, $page);
                 $this->addFlash('success', DictionaryMessage::PAGE_SAVED);
-                $logger->notice(self::LOG_PREFIX . DictionaryMessage::PAGE_SAVED, [
-                    'page' => $page,
-                ]);
+                $logger->notice(self::LOG_PREFIX . DictionaryMessage::PAGE_SAVED, ['page' => $page]);
 
                 if ($request->request->getBoolean('returnToNewFormAfterSave')) {
                     return $this->redirectToRoute('app_page_create');
                 }
 
-                return $this->redirectToRoute('app_page_update', ['uuid' => $page->getUuid(), '_locale' => $locale]);
+                return $this->redirectToRoute('app_section_update', ['uuid' => $page->getUuid(), '_locale' => $locale]);
+
             } catch (\Throwable $exception) {
 
-                $logger->error(self::LOG_PREFIX . DictionaryMessage::PAGE_SAVING_ERROR. ': {message}', [
+                $logger->error(self::LOG_PREFIX . DictionaryMessage::PAGE_SAVING_ERROR . ': {message}', [
                     'message' => $exception->getMessage(),
                     'file' => $exception->getFile(),
                     'line' => $exception->getLine(),
@@ -97,8 +98,12 @@ class AdminController extends AbstractController
             }
         }
 
+        $message = $this->getValidateMessages($form->getErrors());
+        if (!empty($message)) {
+            $this->addFlash('danger', $message);
+        }
 
-        return $this->render(sprintf('@Page/%s/form.html.twig', $activeSite->templatePath), [
+        return $this->render(sprintf('@Page/%s/admin/sections/form.html.twig', $activeSite->templatePath), [
             'form' => $form->createView(),
             'page' => $page,
             'parent' => $parent,
@@ -106,8 +111,8 @@ class AdminController extends AbstractController
     }
 
     #[Route(
-        "/{_locale}/admin/edit-page/{uuid}",
-        name: "app_page_update",
+        "/admin/{_locale}/edit-section/{uuid}",
+        name: "app_section_update",
         defaults: ['_locale' => null],
         methods: ['GET', 'POST']
     )]
@@ -115,21 +120,21 @@ class AdminController extends AbstractController
     public function edit(
         #[MapEntity(mapping: ['uuid' => 'uuid'])] Page $page,
         Request $request,
-        PageManager $pageManager,
+        AdminSectionManager $adminSectionManager,
         LoggerInterface $logger
     ): Response {
         $activeSite = $request->attributes->get('active_site');
 
-        $form = $this->createForm(PageType::class, $page, [
-            'languages' => array_flip($activeSite->languages),
-            'isMainPage' => $page->getParent() === null && $page->getSlug() === '/',
+        $form = $this->createForm(SectionType::class, $page, [
+            'languages' => array_flip($activeSite->languages)
         ]);
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             try {
                 $locale = $request->getLocale();
-                $pageManager->update($page);
+                $adminSectionManager->update($activeSite, $page);
                 $logger->notice(self::LOG_PREFIX . DictionaryMessage::PAGE_SAVED, [
                     'page' => $page,
                 ]);
@@ -139,7 +144,7 @@ class AdminController extends AbstractController
                 if ($request->request->getBoolean('returnToNewFormAfterSave')) {
                     return $this->redirectToRoute('app_page_create');
                 }
-                return $this->redirectToRoute('app_page_update', ['uuid' => $page->getUuid(), '_locale' => $locale]);
+                return $this->redirectToRoute('app_section_update', ['uuid' => $page->getUuid(), '_locale' => $locale]);
             } catch (\Throwable $exception) {
                 $logger->error(self::LOG_PREFIX . DictionaryMessage::PAGE_SAVING_ERROR. ': {message}', [
                     'message' => $exception->getMessage(),
@@ -150,17 +155,16 @@ class AdminController extends AbstractController
                 $this->addFlash('danger', DictionaryMessage::PAGE_SAVING_ERROR);
             }
         }
-        return $this->render(sprintf('@Page/%s/form.html.twig', $activeSite->templatePath), [
+
+        $message = $this->getValidateMessages($form->getErrors());
+        if (!empty($message)) {
+            $this->addFlash('danger', $message);
+        }
+
+        return $this->render(sprintf('@Page/%s/admin/sections/form.html.twig', $activeSite->templatePath), [
             'form' => $form->createView(),
             'page' => $page,
             'parent' => $page->getParent(),
         ]);
-    }
-
-    #[Route('/{_locale}/admin/delete-page-safe/{id}', name: 'app_delete_page_safe', methods: ['GET'])]
-    #[Route('/{_locale}/admin/delete-page/{id}', name: 'app_delete_page_sage', methods: ['GET'])]
-    public function delete(Page $page): Response
-    {
-
     }
 }

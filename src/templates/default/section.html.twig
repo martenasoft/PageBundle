@@ -4,7 +4,9 @@
 {% block flash_message %} {% include '@Page/' ~ app.request.attributes.get('active_site').templatePath ~ '/flash-message.html.twig' %}{% endblock %}
 
 {% block body %}
+    {% if page.preview is defined and page.preview is not null %}
     <div> {{ page.preview }} </div>
+    {% endif %}
 
     {% for item in items %}
         {% include '@Page/'~ app.request.attributes.get('active_site').templatePath  ~'/page-item.html.twig' with {page: item} %}
@@ -14,12 +16,12 @@
         {{ knp_pagination_rel_links(items) }}
     {% endif %}
     <hr>
+
     {% set carusel = render(controller('image_viewer::getImages', {
         request: app.request,
         type: 'page',
-        parentUuid: page.uuid,
-        size: 'big',
-        format: "html"
+        parentUuid: (page.uuid is defined ? page.uuid : null),
+        size: 'big'
     }))|trim %}
     <div class="row">
         {% if carusel is not empty %}

@@ -1,0 +1,72 @@
+{% extends '@Admin/' ~ app.request.attributes.get('active_site').templatePath ~ '/base.html.twig' %}
+
+{% block title %}{{ 'Pages' | trans}} {{ 'basket' | trans }} {% endblock %}
+{% block h1 %}{{ 'Pages' | trans}} {{ 'basket' | trans }} {% endblock %}
+
+
+{% block breadcrumbs %}
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('app_page_main') }}">{{ 'Home' | trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin_main') }}">Admin</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('app_page_items_admin') }}">Pages</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ 'Pages' | trans}} {{ 'basket' | trans }}</li>
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block body %}
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>{{ 'Name' | trans }}</th>
+            <th class="text-end"></th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for page in pagination %}
+            <tr>
+
+                <td><a href="{{ path('app_page_items_admin', {'parent': page.uuid}) }}">{{ page.name }}</a> </td>
+                <td class="text-end">
+                    {% include '@Admin/' ~ app.request.attributes.get('active_site').templatePath ~ '/_view_admin_sub_menu.html.twig' with {
+                        noDivider: true,
+                        items: [
+                            {
+                                title: 'Show',
+                                path: (page.slug == '/' ? path('app_page_main') : path(page.routeName, {type: constant('MartenaSoft\\\CommonLibrary\\\Dictionary\\\DictionaryPage::TYPES')[page.type], slug: page.level == 1 ? null : page.menu.fullPath}) ),
+                                attr: 'target="_blank"'
+                            },
+                            {
+                                title: 'Edit',
+                                path: path('app_page_update', {'uuid': page.uuid}),
+                            },
+                            {
+                                title: 'Restore from basket',
+                                path: path('app_restore_from_basket_page', {'uuid': page.uuid})
+                            },
+                            {
+                                title: 'Delete from basket',
+                                path: path('app_delete_page', {'uuid': page.uuid}),
+                                attr: "onclick='return confirm(\"Delete this page\")'"
+                            },
+                        ]
+                    }%}
+
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="3">
+                    {% include '@Admin/' ~ app.request.attributes.get('active_site').templatePath ~ '/no_records_founds.html.twig' %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="navigation">
+        {{ knp_pagination_render(pagination) }}
+    </div>
+{% endblock %}

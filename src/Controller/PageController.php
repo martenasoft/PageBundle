@@ -2,6 +2,7 @@
 
 namespace MartenaSoft\PageBundle\Controller;
 
+use MartenaSoft\CommonLibrary\Dictionary\DictionaryPage;
 use MartenaSoft\PageBundle\Manager\PageManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,7 +26,7 @@ class PageController extends AbstractController
 
         return $this->render(sprintf('@Page/%s/main.html.twig', $activeSite->templatePath), [
             'itemsOnMain' => $pageMainResponseDto->getItemsOnMain(),
-            'page' => $pageMainResponseDto->getPage(),
+            'page' => $pageMainResponseDto->getPages(),
             'imagesConfig' => $pageMainResponseDto->getImagesConfig()
         ]);
     }

@@ -7,15 +7,15 @@ use MartenaSoft\PageBundle\Entity\Page;
 class PageMainResponseDto
 {
     public function __construct(
-        private ?Page $page = null,
+        private ?array $pages = null,
         private ?array $itemsOnMain = null,
         private ?array $imagesConfig = null
     ) {
     }
 
-    public function getPage(): ?Page
+    public function getPages(): ?array
     {
-        return $this->page;
+        return $this->pages;
     }
 
     public function getItemsOnMain(): ?array

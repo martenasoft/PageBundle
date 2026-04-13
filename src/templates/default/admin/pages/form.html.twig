@@ -2,8 +2,8 @@
 
 {% set isMainPage = (app.request.attributes.get('_route') == 'app_page_main_create') %}
 
-{% block title %} {{ (page.uuid is null ? 'Create' : 'Update') | trans }} {{ isMainPage ? 'Main page' : 'Page' | trans }} {{ page.uuid is not null ? page.name }} {% endblock %}
-{% block h1 %}{{ (page.uuid is null ? 'Create' : 'Update') | trans }} {{ isMainPage ? 'Main page' : 'Page' | trans }}  {{ page.uuid is not null ? page.name }} {% endblock %}
+{% block title %} {{ (page.uuid is null ? 'Create' : 'Update') | trans }} {{ 'Page' | trans }} {{ page.uuid is not null ? page.name }} {% endblock %}
+{% block h1 %}{{ (page.uuid is null ? 'Create' : 'Update') | trans }} {{ 'Page' | trans }}  {{ page.uuid is not null ? page.name }} {% endblock %}
 {% block breadcrumbs %}
     {% set parentPath = (parent.parent is defined and parent.parent is not null ? parent.parent.uuid : null) %}
     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
@@ -11,17 +11,12 @@
 
             <li class="breadcrumb-item"><a href="{{ path('app_page_main') }}">{{ 'Home' | trans }}</a></li>
             <li class="breadcrumb-item"><a href="{{ path('admin_main') }}">{{ 'Admin' | trans }}</a></li>
-            <li class="breadcrumb-item"><a href="{{ path('app_page_items_admin') }}">{{ 'Pages items' | trans }}</a>
-            </li>
-
-            {% if parent is defined and parent is not null %}
-                <li class="breadcrumb-item"><a href="{{ path('app_page_items_admin') }}">{{ 'Pages' | trans }}</a></li>
-                {% if parentPath %}
-                    <li class="breadcrumb-item"><a href="{{ path('app_page_items_admin', {parent: parentPath }) }}">{{ parent.name is defined and parent.name is not null ? parent.name  }}</a></li>
-                {% endif %}
+            {% if parent is not null %}
+            <li class="breadcrumb-item"><a href="{{ path('app_page_section_items_admin', {parent: parent.uuid }) }}">{{ (parent.title is not empty ? parent.title : parent.name) }}</a></li>
             {% endif %}
+            <li class="breadcrumb-item"><a href="{{ path('app_page_items_admin') }}">{{ 'All pages' | trans }}</a></li>
             <li class="breadcrumb-item active"
-                aria-current="page">{{ page.id is null ? 'Create' : 'Update' }} {{ isMainPage ? 'Main page' : 'Page' | trans }} {{ page.uuid is not null ? page.name }} </li>
+                aria-current="page">{{ page.id is null ? 'Create' : 'Update' }} {{ 'Page' | trans }} {{ page.uuid is not null ? page.name }} </li>
         </ol>
     </nav>
 {% endblock %}
@@ -34,8 +29,13 @@
             createButtonPath: (page.uuid is defined and page.type != constant('MartenaSoft\\\CommonLibrary\\\Dictionary\\\DictionaryPage::PAGE_TYPE') ? path('app_page_create', {'parentUuid': page.uuid}) : null),
             items: [
                 {
+                    title: 'Create',
+                    path: path('app_page_create', {parentUuid: parent.uuid }),
+                    attr: 'target="_blank"'
+                },
+                {
                     title: 'Show',
-                    path: (page.slug == '/' ? path('app_page_main') : path(page.routeName, {type: constant('MartenaSoft\\\CommonLibrary\\\Dictionary\\\DictionaryPage::TYPES')[page.type], slug: page.level == 1 ? null : page.menu.fullPath}) ),
+                    path: path(page.routeName, { slug: page.menu.fullPath }),
                     attr: 'target="_blank"'
                 },
                 {
@@ -85,33 +85,33 @@
         </div>
 
         <div class="row mt-3">
-            <div class="col-12">Main page
-                <hr>
-            </div>
-        </div>
-        <div class="row mt-3">
-            <div class="col-12">{{ form_widget(form.isOnMain) }}</div>
-        </div>
-
-        <div class="row mt-3">
             <div class="col-12">Menu
                 <hr>
             </div>
         </div>
+        <div class="row">
+            <div class="col-2">{{ form_label(form.title) }}</div>
+            <div class="col-6">{{ form_widget(form.title) }}</div>
+            <div class="col-4 text-end">{{ form_errors(form.title) }}</div>
+        </div>
+        
         <div class="row mt-3">
             <div class="col-12">{{ form_widget(form.isOnTopMenu) }}</div>
             <div class="col-12">{{ form_widget(form.isOnLeftMenu) }}</div>
             <div class="col-12">{{ form_widget(form.isOnFooterMenu) }}</div>
         </div>
-
         <hr>
 
-        <div class="row">
-            <div class="col-2">{{ form_label(form.type) }}</div>
-            <div class="col-6">{{ form_widget(form.type) }}</div>
-            <div class="col-4 text-end">{{ form_errors(form.type) }}</div>
+        <div class="row mt-3">
+            <div class="col-3">{{ form_label(form.file) }}</div>
+            <div class="col-9">{{ form_widget(form.file) }}</div>
         </div>
-        <hr>
+
+
+        <div class="row mt-3">
+            <div class="image-upload" data-uuid="{{ page.uuid }}" style="display: none">
+            </div>
+        </div>
 
         <div class="form-check mt-3">
             <input class="form-check-input" name="returnToNewFormAfterSave" type="checkbox" value="1"
@@ -120,7 +120,6 @@
                 Save and return to this form
             </label>
         </div>
-
 
         <div class="row mt-3">
 
@@ -131,5 +130,7 @@
             </div>
         </div>
     </div>
+
+
     {{ form_end(form) }}
 {% endblock %}

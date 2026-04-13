@@ -20,39 +20,57 @@ class PageRepository extends ServiceEntityRepository
         return $this->count($filter);
     }
 
+    public function getItemsInBasketQueryBuilder(ActiveSiteDto $activeSiteDto): QueryBuilder
+    {
+        return $this
+            ->createQueryBuilder('p')
+            ->andWhere('p.isDeleted = :isDeleted')
+            ->andWhere('p.siteId = :siteId')
+            ->setParameter('isDeleted', true)
+            ->setParameter('siteId', $activeSiteDto->id);
+    }
+
     public function getOneBySlugQueryBuilder(
         ActiveSiteDto $activeSiteDto,
         string $slug,
         string $locale,
         string $alias = 'p'
-    ): QueryBuilder {
+    ): QueryBuilder
+    {
 
         $queryBuilder = $this->getQueryBuilderWithLanguage($locale, $alias);
         $queryBuilder->andWhere("{$alias}.slug=:slug");
-
         $queryBuilder->andWhere("{$alias}.siteId=:activeSiteId");
         $queryBuilder
             ->setParameter('slug', $slug)
-            ->setParameter('activeSiteId', $activeSiteDto->id)
-        ;
+            ->setParameter('activeSiteId', $activeSiteDto->id);
 
         return $queryBuilder;
     }
 
-    public function getMainPage(ActiveSiteDto $activeSiteDto, string $language): ?Page
-    {
-        return $this->findOneBy(['siteId' => $activeSiteDto->id, 'lang' => $language, 'slug' => '/']);
-    }
-
-    public function getItemsQueryBuilder(string $locale, ?Page $parent = null, ?int $limit = null, string $alias = 'p'): QueryBuilder
+    public function getItemsQueryBuilder(
+        string $locale,
+        ?Page $parent = null,
+        ?int $limit = null,
+        string $alias = 'p',
+        ?bool $isOnMain = null,
+        bool $isOrder = true
+    ): QueryBuilder
     {
         $queryBuilder =
-            $this
-            ->getQueryBuilderWithLanguage($locale, $alias)
-          //  ->addOrderBy('p.position', "ASC")
-            ->addOrderBy("{$alias}.createdAt", "DESC")
+            $this->getQueryBuilderWithLanguage($locale, $alias);
 
-        ;
+        if ($isOrder) {
+            $queryBuilder
+                ->addOrderBy("{$alias}.position", "ASC")
+                ->addOrderBy("{$alias}.createdAt", "DESC");
+        }
+
+        if ($isOnMain !== null) {
+            $queryBuilder
+                ->andWhere("{$alias}.isOnMain=:isOnMain")
+                ->setParameter("isOnMain", $isOnMain);
+        }
 
         if ($parent !== null) {
             $queryBuilder
@@ -77,8 +95,7 @@ class PageRepository extends ServiceEntityRepository
             ->leftJoin("{$alias}.menu", "menu")
             ->addSelect("menu")
             ->andWhere("{$alias}.lang=:lang")
-            ->setParameter('lang', $locale)
-            ;
+            ->setParameter('lang', $locale);
     }
 
     public function getItemsOnMainPageQueryBuilder(string $locale, ?int $limit = null, string $alias = 'p'): QueryBuilder
@@ -90,8 +107,7 @@ class PageRepository extends ServiceEntityRepository
 
         $queryBuilder
             ->andWhere("{$alias}.isPreviewOnMain=:isPreviewOnMain")
-            ->setParameter("isPreviewOnMain", true)
-        ;
+            ->setParameter("isPreviewOnMain", true);
         return $queryBuilder;
     }
 
@@ -101,5 +117,73 @@ class PageRepository extends ServiceEntityRepository
         if ($isFlush) {
             $this->getEntityManager()->flush();
         }
+    }
+
+    public function collectTreeUuids(string $rootUuid): array
+    {
+        $conn = $this->getEntityManager()->getConnection();
+
+        $sql = <<<SQL
+WITH RECURSIVE tree AS (
+    SELECT id, uuid
+    FROM page
+    WHERE uuid = :rootUuid AND is_deleted = FALSE
+
+  UNION ALL
+
+    SELECT p.id, p.uuid
+    FROM page p
+    INNER JOIN tree t ON p.parent_id = t.id
+)
+SELECT uuid
+FROM tree
+SQL;
+
+        $rows = $conn->fetchFirstColumn($sql, ['rootUuid' => $rootUuid]);
+
+        $uuids = array_values(array_unique(array_filter($rows, static fn($v) => is_string($v) && $v !== '')));
+
+        return $uuids;
+    }
+
+    public function applyTreeDeletionByUuids(array $uuids, bool $hardDelete = false): int
+    {
+        $uuids = array_values(array_unique(array_filter($uuids, static fn($v) => is_string($v) && $v !== '')));
+
+        if ($uuids === []) {
+            return 0;
+        }
+
+        $conn = $this->getEntityManager()->getConnection();
+
+        if ($hardDelete) {
+            $sql = 'DELETE FROM page WHERE uuid = ANY(:uuids)';
+        } else {
+            // Если у тебя в таблице имена колонок другие — поправь тут
+            $sql = 'UPDATE page SET is_deleted = TRUE, deleted_at = NOW() WHERE uuid = ANY(:uuids)';
+        }
+
+        return $conn->executeStatement($sql, ['uuids' => $uuids], ['uuids' => \Doctrine\DBAL\ArrayParameterType::STRING]);
+    }
+
+    public function deleteSafeByUuids(array $uuids = []): void
+    {
+        if (empty($uuids)) {
+            return;
+        }
+
+        $this
+            ->getEntityManager()
+            ->createQueryBuilder()
+            ->update(Page::class, 'p')
+            ->set('p.isDeleted', ':isDeleted')
+            ->set('p.deletedAt', ':cureTime')
+            ->where('p.uuid IN (:uuids)')
+            ->setParameter('isDeleted', true)
+            ->setParameter('cureTime', new \DateTimeImmutable())
+            ->setParameter('uuids', $uuids)
+            ->getQuery()
+            ->execute()
+            ;
     }
 }

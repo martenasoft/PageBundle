@@ -1,17 +1,33 @@
 {% extends '@Site/' ~ app.request.attributes.get('active_site').templatePath ~ '/base.html.twig' %}
+
+{% set firstPageName = (pages is defined and pages[0].name is defined ? pages[0].name : 'Main page is not exists') %}
+
+{% block h1 %}{{ firstPageName }}{% endblock %}
+{% block title %} {{ firstPageName }} {% endblock %}
+
+
 {% block body %}
 
-    {% if page is defined and page is not null %}
-        {{ page.preview }}
-        {{ render(controller('image_viewer::getImages', {
-            request: app.request,
-            type: 'page',
-            parentUuid: page.uuid,
-            size: 'big'
-        })) }}
+    {% if pages is defined and pages is not null %}
+        {% for page in pages %}
+
+            {% if loop.first == false %}
+                <hr>
+                <h2> {{ page.name }} </h2>
+            {% endif  %}
+
+            {{ page.preview }}
+            {{ render(controller('image_viewer::getImages', {
+                request: app.request,
+                type: 'page',
+                parentUuid: page.uuid,
+                size: 'big'
+            })) }}
 
 
-        {{ page.body }}
+            {{ page.body }}
+        {% endfor %}
+
     {% endif %}
 {% endblock %}
 

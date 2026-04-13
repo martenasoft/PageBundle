@@ -1,0 +1,113 @@
+{% extends '@Admin/' ~ app.request.attributes.get('active_site').templatePath ~ '/base.html.twig' %}
+
+{% set sectionTitle = (page is not null? (page.title is not empty ? page.title : page.name) : 'Section Items') | trans %}
+
+{% block title %}{{ sectionTitle }}{% endblock %}
+{% block h1 %}{{ sectionTitle }}{% endblock %}
+
+{% block h1_right %}
+
+    <div class="text-end">
+
+        {% if parent.parentType is not defined or parent.parentType is null or parent.parentType == constant('MartenaSoft\\\CommonLibrary\\\Dictionary\\\DictionaryPage::SECTION_TYPE')  %}
+            <a class="btn btn-outline-primary" href="{{ path('app_section_create', {parentUuid: parent.uuid is defined  ? parent.uuid : null}) }}">{{ 'Create section' | trans }}</a>
+        {% endif %}
+
+        {% if parent.uuid is defined and (parent.parentType is not defined or parent.parentType is null or parent.parentType == constant('MartenaSoft\\\CommonLibrary\\\Dictionary\\\DictionaryPage::PAGE_TYPE')) %}
+            <a class="btn btn-outline-primary" href="{{ path('app_page_create', {parentUuid: parent.uuid}) }}">{{ 'Create page' | trans }} </a>
+        {% endif %}
+
+        {% if paren.uuid is not defined %}
+            <a class="btn btn-outline-primary" href="{{ path('app_basket_page') }}">{{ 'Basket' | trans }} </a>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block breadcrumbs %}
+    {% set parentPath = (parent.parent is defined and parent.parent is not null ? parent.parent.uuid : null) %}
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('app_page_main') }}">{{ 'Home' | trans }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin_main') }}">{{ 'Admin' | trans }}</a></li>
+
+            {% if page is null %}
+                <li class="breadcrumb-item active" aria-current="page">{{ sectionTitle | trans }}</a></li>
+            {% else %}
+                <li class="breadcrumb-item"><a href="{{ path('app_page_section_items_admin') }}">{{ 'Section Items' | trans}}</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ sectionTitle }}</a></li>
+            {% endif %}
+        </ol>
+    </nav>
+{% endblock %}
+
+{% block body %}
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>{{ 'Name' | trans }}</th>
+            <th class="text-end">
+                {% if parent is defined and parent is not null %}
+                    <a href="{{ path('app_page_section_items_admin') }}">{{ 'Top' | trans }}</a> |
+                    <a href="{{ path('app_page_section_items_admin', {parent: (parent.parent is defined and parent.parent is not null ? parent.parent.uuid : null)}) }}">{{ 'Parent' | trans }}</a>
+                {% endif %}
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+
+        {% for page in pagination %}
+            {% set isTypeSection = page.type == constant('MartenaSoft\\\CommonLibrary\\\Dictionary\\\DictionaryPage::SECTION_TYPE') %}
+            <tr>
+                <td>
+                    {% set name = (page.title is not empty ? page.title : page.name)  %}
+                    {% if isTypeSection %}
+                        <a href="{{ path('app_page_section_items_admin', {'parent': page.uuid}) }}">{{ name }}</a>
+                    {% else %}
+                        <a href="{{  path('app_page_update', {'uuid': page.uuid}) }}">{{ name }}</a>
+                    {% endif %}
+
+                </td>
+                <td class="text-end">
+
+                    {% include '@Admin/' ~ app.request.attributes.get('active_site').templatePath ~ '/_view_admin_sub_menu.html.twig' with {
+                        noDivider: true,
+                        items: [
+                            {
+                                title: (isTypeSection == false ? 'Create sub section' : 'Create page'),
+                                path: (isTypeSection == false ? path('app_section_create', {'parentUuid': page.uuid}) : path('app_page_create', {'parentUuid': page.uuid}) ),
+                            },
+
+                            {
+                                title: 'Show',
+                                path: path(page.routeName, { slug: page.menu.fullPath }),
+                                attr: 'target="_blank"'
+                            },
+                            {
+                                title: (isTypeSection == false ? 'Edit page' : 'Edit section') ,
+                                path: (isTypeSection == false ?  path('app_page_update', {'uuid': page.uuid}) :  path('app_section_update', {'uuid': page.uuid}))
+                            },
+                            {
+                                title: 'Delete',
+                                path: path('app_delete_page_safe', {'uuid': page.uuid}),
+                                attr: "onclick='return confirm(\"Delete this page\")'"
+                            },
+                        ]
+                    }%}
+
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="3">
+                    {% include '@Admin/' ~ app.request.attributes.get('active_site').templatePath ~ '/no_records_founds.html.twig' %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="navigation">
+        {{ knp_pagination_render(pagination) }}
+    </div>
+{% endblock %}

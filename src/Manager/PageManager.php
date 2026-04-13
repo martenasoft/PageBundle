@@ -35,11 +35,11 @@ readonly class PageManager
     public function getMainPage(ActiveSiteDto $activeSiteDto, string $locale): PageMainResponseDto
     {
         return new PageMainResponseDto(
-            page: $this
+            pages: $this
                 ->pageRepository
-                ->getOneBySlugQueryBuilder($activeSiteDto, "/", $locale)
+                ->getItemsQueryBuilder($locale, isOnMain: true)
                 ->getQuery()
-                ->getOneOrNullResult(),
+                ->getResult(),
             itemsOnMain: $this->pageRepository->getItemsOnMainPageQueryBuilder(
                 $locale,
                 $activeSiteDto->previewOnMainLimit
@@ -47,23 +47,41 @@ readonly class PageManager
             imagesConfig: $this->parameterBag->get('image'),
         );
     }
+//
+//    public function getItems(
+//        ActiveSiteDto $activeSite,
+//        string $locale,
+//        int $page = 1,
+//        ?Page $parent = null,
+//        ?bool $isShowSafeDeleted = false
+//    ): PaginationInterface
+//    {
+//        $queryBuilder = $this->pageRepository->getItemsQueryBuilder($locale, $parent);
+//        if (!$isShowSafeDeleted) {
+//            $queryBuilder
+//                ->andWhere("p.isDeleted=:isDeleted")
+//                ->setParameter('isDeleted', false);
+//            ;
+//        }
+//
+//        return $this->pagination->paginate(
+//            $queryBuilder->getQuery(),
+//            $page,
+//            $activeSite->previewOnMainLimit,
+//            ['distinct' => false]
+//        );
+//    }
 
-    public function getItems(
-        ActiveSiteDto $activeSite,
-        string $locale,
-        int $page = 1,
-        ?Page $parent = null
-    ): PaginationInterface
-    {
-        $queryBuilder = $this->pageRepository->getItemsQueryBuilder($locale, $parent);
-
-        return $this->pagination->paginate(
-            $queryBuilder->getQuery(),
-            $page,
-            $activeSite->previewOnMainLimit,
-            ['distinct' => false]
-        );
-    }
+//    public function getItemsInBasketQueryBuilder(ActiveSiteDto $activeSiteDto, int $page = 1): PaginationInterface
+//    {
+//        $queryBuilder = $this->pageRepository->getItemsInBasketQueryBuilder($activeSiteDto);
+//        return $this->pagination->paginate(
+//            $queryBuilder->getQuery(),
+//            $page,
+//            $activeSiteDto->previewOnMainLimit,
+//            ['distinct' => false]
+//        );
+//    }
 
     public function getPage(ActiveSiteDto $activeSite, string $locale, ?string $slug = null, int $page = 1): ?PageResponseDto
     {
@@ -78,74 +96,58 @@ readonly class PageManager
         return new PageResponseDto($pageItem, $items, $activeSite);
     }
 
-    public function create(
-        AuthorInterface $author,
-        ActiveSiteDto $activeSiteDto,
-        string $locale,
-        string $route,
-        Page $page,
-        ?Page $parent
-    ): void
-    {
-        $page->setSiteId($activeSiteDto->id);
-        $slug_ = $this->slugger->slug($page->getName())->lower()->toString();
-        $type_ = DictionaryPage::PAGE_TYPE;
+//    public function create(
+//        AuthorInterface $author,
+//        ActiveSiteDto $activeSiteDto,
+//        string $locale,
+//        Page $page,
+//        ?Page $parent
+//    ): void
+//    {
+//        $page->setSiteId($activeSiteDto->id);
+//        $slug_ = $this->slugger->slug($page->getName())->lower()->toString();
+//
+//        $routeName = $page->isOnMain() ? 'app_page_main' :  'app_page_slug';
+//
+//        if ($page->getType() === DictionaryPage::SECTION_TYPE) {
+//            $routeName = 'app_section_slug';
+//        }
+//
+//        if ($parent !== null) {
+//            $page->setParent($parent);
+//            $page->setIsOnMain(false);
+//        } elseif ($page->isOnMain()) {
+//            $slug_ = '/';
+//        }
+//
+//        $page->setSlug($slug_);
+//        $page->setLang($locale);
+//        $page->setRouteName($routeName);
+//
+//        $this->pageRepository->save($page);
+//        $this->eventDispatcher->dispatch(new SavedPageEvent($page, $activeSiteDto));
+//
+//        $this->logger->notice(
+//            DictionaryMessage::PAGE_SAVED, [
+//                'page' => $page,
+//            ]
+//        );
+//    }
 
-        $isOnMenu = false;
-        if ($route === 'app_page_create_on_top_nav') {
-            $page->setIsOnTopMenu(true);
-            $isOnMenu = true;
-        }
-
-        if ($route === 'app_page_create_on_left_menu') {
-            $page->setIsOnLeftMenu(true);
-            $isOnMenu = true;
-        }
-
-        if ($route === 'app_page_create_on_footer') {
-            $page->setIsOnFooterMenu(true);
-            $isOnMenu = true;
-        }
-
-        $routeName = 'app_page_slug';
-
-        if ($parent !== null) {
-            $page->setParent($parent);
-        } elseif (!$isOnMenu) {
-            $slug_ = '/';
-            $routeName = 'app_page_main';
-        }
-
-        $page->setAuthor($author->getUuid()->toString());
-
-        $page->setSlug($slug_);
-        $page->setType($type_);
-        $page->setLang($locale);
-        $page->setRouteName($routeName);
-
-        $this->pageRepository->save($page);
-        $this->eventDispatcher->dispatch(new SavedPageEvent($page));
-
-        $this->logger->notice(
-            DictionaryMessage::PAGE_SAVED, [
-                'page' => $page,
-            ]
-        );
-    }
-
-    public function update(Page $page): void
-    {
-        if ($page->getSlug() !== '/') {
-            $slug_ = $this->slugger->slug($page->getName())->lower()->toString();
-            $page->setSlug($slug_);
-        }
-
-        $this->pageRepository->save($page);
-        $this->eventDispatcher->dispatch(new SavedPageEvent($page));
-    }
-
-    public function gasMainPage(ActiveSiteDto $activeSiteDto, string $locale): ?Page
-    {
-        return $this->pageRepository->getMainPage($activeSiteDto, $locale);
-    }
+//    public function update(Page $page, ActiveSiteDto $activeSiteDto): void
+//    {
+//        if ($page->getSlug() !== '/') {
+//            $slug_ = $this->slugger->slug($page->getName())->lower()->toString();
+//            $page->setSlug($slug_);
+//        }
+//
+//        $this->pageRepository->save($page);
+//        $this->eventDispatcher->dispatch(new SavedPageEvent($page, $activeSiteDto));
+//    }
+//
+//    public function delete(string $uuid, bool $isSafeDeleted = false): void
+//    {
+//        $uuid = $this->pageRepository->collectTreeUuids($uuid);
+//        $this->pageRepository->deleteSafeByUuids($uuid);
+//    }
 }
